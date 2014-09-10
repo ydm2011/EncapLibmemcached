@@ -1,0 +1,3 @@
+this project just encap the libmemcached c api ;
+its main purpose is that release the burden of the users who must release the memory 
+of the cache;and also can short the functions parameters;

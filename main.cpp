@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <map>
 #include "libmemcached/memcached.h"
 using namespace std;
 
@@ -19,8 +20,13 @@ private:
     size_t freeBytes;
 };
 
+
+
 int main()
 {
+
+
+
     memcached_server_st *servers =NULL;
     //memcached_server_list_st is defined by memcached_server_st*
     memcached_st *memc;// = new memcached_st;
@@ -168,9 +174,21 @@ int main()
     const char* tmp_array;
     const char** tmp_two = new const char* [10];
 
-    string test_array("love");
-    tmp_array = test_array.c_str();
-       tmp_two[0] = tmp_array;
+
+    char* test_string = new char[10];
+    for(int i=0;i<10;i++)
+    {
+        test_string[i]='a';
+    }
+    string test_string_initial(test_string);
+    delete test_string;
+    test_string = (char*) 0;
+    std::cout<<test_string_initial<<endl;
+
+    //test map
+    map<string,int> test_map;
+    test_map.insert(make_pair<string,int>(string("test"),5));
+    std::cout<<"test  map:"<<test_map["test"]<<endl;
     return 0;
 }
 

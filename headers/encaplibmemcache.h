@@ -19,7 +19,15 @@
 #define ENCAPLIBMEMCACHE_H
 #include <iostream>
 #include "memcached.h"
+#include <vector>
 #include  <memory>
+#include <map>
+
+enum NETPROTOCOL{TCP,UDP,UNIX};
+
+/*
+ * this struct is the MemManipulateParam 
+ */
 struct MemManipulateParam{
     MemManipulateParam(time_t extime=0,uint32_t _flags=0):\
         expirationTime(extime),flags(_flags){
@@ -28,64 +36,73 @@ struct MemManipulateParam{
     uint32_t flags;
 };
 /*
- * this template class have the ability that free the stack memory that not allocted by new;
- *
+ * this template class have the ability that free the stack memory that
+ * not allocted by new;
  */ 
 template<class FreeType>
 class FreeNotByNew{
 public:
-    FreeNotByNew(const size_t length=0):freeBytes(length)
+    FreeNotByNew(size_t length=0):freeBytes(length)
     {
         ;
     }
     void operator()(FreeType*);
 private:
-    FreeNotByNew(const FreeNotByNew<FreeType>&);
     FreeNotByNew operator =(const FreeNotByNew<FreeType>&);
     size_t freeBytes;
-}
-
+};
+/*
+ * this was the result fetched from the memcached server
+ */
+struct ResultFromMemcache{
+public:
+    ResultFromMemcache();
+    ResultFromMemcache(char* _key,size_t _keyLength,char* _value,\
+                       size_t _valueLength,uint32_t flags=0);
+    std::string key;
+    std::shared_ptr<char> value;
+    size_t keyLength;
+    size_t valueLength;
+    uint32_t flags;
+};
 class EncapLibMemcached{
 public:
-    EncapLibMemcached(vector<string> &configParameters,manipulate); 
-    EncapLibMemcached(memcached_st* initialedServer);
+    EncapLibMemcached(const std::string& configParameters,const MemManipulateParam& mmparams);
+    EncapLibMemcached(std::shared_ptr<memcached_st> initializedServer,const MemManipulateParam& mmParam);
     //modify the key and value of the memcached;
     const char* set(const std::string& key,const std::string& value);
-    const char* add(const string& key, const string& value);
-    const char* replace(const string& key,const string& value);
-    const char* append(const string& key,const string& value);
-    const char* prepend(const string&key,const string& value);
-    const char* increment(const string& key,const uint32_t offset);
-    const char* decrement(const string& key,const uint32_t offset);
-    const char* delete_data_of_server(const string& key);
-    const char* cas(const string& key,const string& value,uint64_t casUnique);
-    const char* key_exits(const string& key);
+    const char* add(const std::string& key, const std::string& value);
+    const char* replace(const std::string& key,const std::string& value);
+    const char* append(const std::string& key,const std::string& value);
+    const char* prepend(const std::string& key,const std::string& value);
+    const char* increment(const std::string& key,std::uint32_t offset,std::uint64_t& result);
+    const char* decrement(const std::string& key,std::uint32_t offset,std::uint64_t& result);
+    const char* delete_data(const std::string& key);
+    const char* cas(const std::string& key,const std::string& value,std::uint64_t casUnique);
+    const char* key_exist(const std::string& key);
     const char* flush_client_buffers();
     //get the memcached instance;
-    shared_ptr<memcached_ist> getMemcached();
+    std::shared_ptr<memcached_st> getMemcached();
     //get infomation from the server
     const MemManipulateParam& get_configurtaion();
     //retrieving data from the server
-    const char* get(const string& key,shared_ptr<char> returnResult);
-    const char* muti_get(const vector<string>& keys);
+    const char* get(const std::string& key,std::shared_ptr<char> returnResult);
+    const char* muti_get(const std::vector<std::string>& keys);
 
-    const char* fetch_result(char* result);
-    void result_key_value();
-    void result_value();
-    void add_server();
+    const char* fetch_result(std::map<std::string,std::shared_ptr<ResultFromMemcache> >&\
+                             results);
+    const char* add_server(const std::string& host,in_port_t port,\
+                           NETPROTOCOL ptotocol=TCP);
+    ~EncapLibMemcached();
 protected:
     //EncapLibMemcached(const EncapLibMemcached& memc);
     //EncapLibMemcached operator=(EncapLibMemcached& memc); 
-    private:
-        size_t freeBytes;
-    };
     const char* flush_client();
     void mem_quit();
-    void parse_return_info();
 private:
     memcached_return_t return_info;
-    shared_ptr<memcached_result_st> smartResultPointer; 
-    shared_ptr<memcached_st> smartMemcPointer;
+    std::shared_ptr<memcached_result_st> smartResultPointer;
+    std::shared_ptr<memcached_st> smartMemcPointer;
     MemManipulateParam manipuParam;
 };
 

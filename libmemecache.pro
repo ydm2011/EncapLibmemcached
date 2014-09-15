@@ -16,8 +16,8 @@ LIBS += /usr/local/libmemcached/lib/libmemcached.so
         #/usr/local/libmemcached/lib/libmemcachedutil.so
 
 SOURCES += \
-    main.cpp \
-    headers/encaplibmemcache.cpp
+    headers/encaplibmemcache.cpp \
+    unitest.cpp
 
 HEADERS += \
     headers/encaplibmemcache.h

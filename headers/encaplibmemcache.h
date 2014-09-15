@@ -23,8 +23,9 @@
 #include  <memory>
 #include <map>
 
-enum NETPROTOCOL{TCP,UDP,UNIX};
-
+enum NetProtocol{TCP,UDP,UNIX};
+enum {MALLOC,ARRAY};
+enum ReturnStatus{MEM_SUCCESS,MEM_FAILED,MEM_ERROR};
 /*
  * this struct is the MemManipulateParam 
  */
@@ -36,20 +37,19 @@ struct MemManipulateParam{
     uint32_t flags;
 };
 /*
- * this template class have the ability that free the stack memory that
+ * this template class could free the stack memory that
  * not allocted by new;
  */ 
 template<class FreeType>
 class FreeNotByNew{
 public:
-    FreeNotByNew(size_t length=0):freeBytes(length)
+    FreeNotByNew(int _mode=MALLOC):mode(_mode)
     {
         ;
     }
     void operator()(FreeType*);
 private:
-    FreeNotByNew operator =(const FreeNotByNew<FreeType>&);
-    size_t freeBytes;
+    int mode;
 };
 /*
  * this was the result fetched from the memcached server
@@ -67,42 +67,70 @@ public:
 };
 class EncapLibMemcached{
 public:
-    EncapLibMemcached(const std::string& configParameters,const MemManipulateParam& mmparams);
-    EncapLibMemcached(std::shared_ptr<memcached_st> initializedServer,const MemManipulateParam& mmParam);
+    //constucted by the given configparameters
+    EncapLibMemcached(const std::string& configParameters,
+                      const MemManipulateParam& mmparams);
+    //constructed by the internel memcached function ,such as the
+    //memcached,memcacehd_create,memcached_clone and so on
+    EncapLibMemcached(std::shared_ptr<memcached_st> initializedServer,
+                      const MemManipulateParam& mmParam);
     //modify the key and value of the memcached;
-    const char* set(const std::string& key,const std::string& value);
-    const char* add(const std::string& key, const std::string& value);
-    const char* replace(const std::string& key,const std::string& value);
-    const char* append(const std::string& key,const std::string& value);
-    const char* prepend(const std::string& key,const std::string& value);
-    const char* increment(const std::string& key,std::uint32_t offset,std::uint64_t& result);
-    const char* decrement(const std::string& key,std::uint32_t offset,std::uint64_t& result);
-    const char* delete_data(const std::string& key);
-    const char* cas(const std::string& key,const std::string& value,std::uint64_t casUnique);
-    const char* key_exist(const std::string& key);
-    const char* flush_client_buffers();
+    int set(const std::string& key,const std::string& value);
+    //add the noexist key and value pair to the memcached
+    int add(const std::string& key, const std::string& value);
+    //replace the existed key's value
+    int replace(const std::string& key,const std::string& value);
+    //append new value after the existing key's  value
+    int append(const std::string& key,const std::string& value);
+    //insert before the the existing key's  value .Example:the existing
+    // key and value is : test_key  test_value ; now we want to prepend the
+    //test_value2 before the test_value,after call this method the key-value pair is
+    //test_key test_value2 test_value2
+    int prepend(const std::string& key,const std::string& value);
+    //increment the numberic value of the given key
+    int increment(const std::string& key,std::uint32_t offset,std::uint64_t& result);
+    //decrement the numberic value of the given key
+    int decrement(const std::string& key,std::uint32_t offset,std::uint64_t& result);
+    //delete the given key and its value
+    int delete_data(const std::string& key);
+    //check the unique of the key and set
+    int cas(const std::string& key,const std::string& value,std::uint64_t casUnique);
+    //to judge whether the given key is existing or not
+    int key_exist(const std::string& key);
+
     //get the memcached instance;
     std::shared_ptr<memcached_st> getMemcached();
     //get infomation from the server
     const MemManipulateParam& get_configurtaion();
     //retrieving data from the server
-    const char* get(const std::string& key,std::shared_ptr<char> returnResult);
-    const char* muti_get(const std::vector<std::string>& keys);
-
-    const char* fetch_result(std::map<std::string,std::shared_ptr<ResultFromMemcache> >&\
+    int get(const std::string& key,std::shared_ptr<char> returnResult);
+    //send some keys to the memcached server to process
+    int muti_get(const std::vector<std::string>& keys);
+    //get the result of the memcached processing result,so this method must call after the
+    //muti_get method
+    int fetch_result(std::map<std::string,std::shared_ptr<ResultFromMemcache> >&\
                              results);
-    const char* add_server(const std::string& host,in_port_t port,\
-                           NETPROTOCOL ptotocol=TCP);
+    //add the sever to the current object
+    int add_server(const std::string& host,in_port_t port,\
+                           NetProtocol ptotocol=TCP);
+    //deconstructor
     ~EncapLibMemcached();
 protected:
-    //EncapLibMemcached(const EncapLibMemcached& memc);
-    //EncapLibMemcached operator=(EncapLibMemcached& memc); 
-    const char* flush_client();
+    //forbiden copy
+    EncapLibMemcached(const EncapLibMemcached& memc);
+    EncapLibMemcached& operator=(EncapLibMemcached& memc);
+    //flush the command in the client buffer
+    int flush_client();
+    //parse the return status information
+    int parse_status(const char* status,size_t length);
+    //disconnect the memcahced server
     void mem_quit();
 private:
+    //the return info strucor
     memcached_return_t return_info;
-    std::shared_ptr<memcached_result_st> smartResultPointer;
+    //memcached_st structor
     std::shared_ptr<memcached_st> smartMemcPointer;
+    //the default parameter:expirtion time and flags
     MemManipulateParam manipuParam;
 };
 

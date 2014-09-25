@@ -265,8 +265,7 @@ int EncapLibMemcached::muti_get(const vector<string>& keys)
 /* 
  *this function fetch the result of the key sended by the muti_get funcition
  */
-int EncapLibMemcached::fetch_result(map<string,
-                                            shared_ptr<ResultFromMemcache> >& results)
+int EncapLibMemcached::fetch_result(map<string,shared_ptr<ResultFromMemcache> >& results)
 {
     flush_client();
     char  return_key[MEMCACHED_MAX_KEY];

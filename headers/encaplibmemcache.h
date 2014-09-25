@@ -68,8 +68,8 @@ public:
 class EncapLibMemcached{
 public:
     //constucted by the given configparameters
-    EncapLibMemcached(const std::string& configParameters,
-                      const MemManipulateParam& mmparams);
+    EncapLibMemcached(const std::string& configParameters="--SERVER=localhost:11211",
+                      const MemManipulateParam& mmparams=MemManipulateParam());
     //constructed by the internel memcached function ,such as the
     //memcached,memcacehd_create,memcached_clone and so on
     EncapLibMemcached(std::shared_ptr<memcached_st> initializedServer,
@@ -103,7 +103,7 @@ public:
     //get infomation from the server
     const MemManipulateParam& get_configurtaion();
     //retrieving data from the server
-    int get(const std::string& key,std::shared_ptr<char> returnResult);
+    int get(const std::string& key,std::shared_ptr<char>& returnResult);
     //send some keys to the memcached server to process
     int muti_get(const std::vector<std::string>& keys);
     //get the result of the memcached processing result,so this method must call after the

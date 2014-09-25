@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <fstream>
 #include <vector>
 #include <map>
 #include "libmemcached/memcached.h"
@@ -39,10 +40,31 @@ int main()
     if(status == MEM_SUCCESS)
          std::cout<<status<<endl;
     else std::cout<<"error!"<<endl;
-    status = testMemcached.replace("xiaodi","3000");
+
     testMemcached.delete_data("daoming");
+    //status = testMemcached.replace("xiaodi","3000");
     if(status != MEM_SUCCESS)
         std::cout<<"error!"<<endl;
+
+    ifstream in;
+
+    in.open("/home/daoming/Desktop/index.html",ios::in|ios::binary);
+    if(!in)
+    {
+        std::cout<<"index.html"<<" Not Found!"<<endl;
+        return -1;
+    }
+    string contents;
+    in.seekg(0,ios::end);
+    contents.resize(in.tellg());
+    in.seekg(0,ios::beg);
+    in.read(&contents[0],contents.size());
+    in.close();
+
+    status = testMemcached.set("find:so",contents);
+    if(status == MEM_SUCCESS)
+         std::cout<<status<<endl;
+    else std::cout<<"error!"<<endl;
     return 0;
 }
 
